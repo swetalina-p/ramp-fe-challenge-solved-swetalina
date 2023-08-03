@@ -1,20 +1,26 @@
-import { useCallback, useState } from "react"
-import { Employee } from "../utils/types"
-import { useCustomFetch } from "./useCustomFetch"
-import { EmployeeResult } from "./types"
+import { useCallback, useState } from "react";
+import { Employee } from "../utils/types";
+import { useCustomFetch } from "./useCustomFetch";
+import { useWrappedRequest } from "./useWrappedRequest";
+import { EmployeeResult } from "./types";
 
 export function useEmployees(): EmployeeResult {
-  const { fetchWithCache, loading } = useCustomFetch()
-  const [employees, setEmployees] = useState<Employee[] | null>(null)
+  const { customFetch } = useCustomFetch();
+  const { loading, wrappedRequest } = useWrappedRequest();
+  const [employees, setEmployees] = useState<Employee[] | null>(null);
 
-  const fetchAll = useCallback(async () => {
-    const employeesData = await fetchWithCache<Employee[]>("employees")
-    setEmployees(employeesData)
-  }, [fetchWithCache])
+  const fetchAll = useCallback(
+    () =>
+      wrappedRequest(async () => {
+        const employeesData = await customFetch<Employee[]>("employees");
+        setEmployees(employeesData);
+      }),
+    [customFetch, wrappedRequest]
+  );
 
   const invalidateData = useCallback(() => {
-    setEmployees(null)
-  }, [])
+    setEmployees(null);
+  }, []);
 
-  return { data: employees, loading, fetchAll, invalidateData }
+  return { data: employees, loading, fetchAll, invalidateData };
 }
